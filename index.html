@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ГОСУСЛУГИ: ОЖИДАНИЕ...</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=" id="favicon">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap');
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #050505;
+            font-family: 'Share Tech Mono', monospace;
+            color: #d0d0d0; 
+            user-select: none; 
+        }
+
+        /* --- 1. SELECTION REDACTION --- */
+        ::selection { background: #000; color: #000; text-shadow: none; }
+
+        #canvas-container {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1;
+            will-change: transform; /* Оптимизация для браузера */
+        }
+
+        /* --- 4. RIGHT CLICK DENIAL UI --- */
+        #access-denied {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #000; border: 2px solid red; color: red;
+            padding: 20px 40px; z-index: 9999; font-family: 'Rubik Glitch', sans-serif;
+            font-size: 2rem; text-align: center; display: none;
+            box-shadow: 0 0 50px red; pointer-events: none;
+        }
+
+        /* --- 5. CURSOR TRAP --- */
+        .trap-alert {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 100px red; background: rgba(255, 0, 0, 0.1);
+            z-index: 98; pointer-events: none; opacity: 0; transition: opacity 0.3s ease-out;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .trap-active { opacity: 1 !important; }
+        .trap-text {
+            font-family: 'Rubik Glitch', sans-serif; font-size: 5rem; color: red;
+            transform: rotate(-5deg); text-shadow: 0 0 10px black;
+        }
+
+        /* --- 8. FAKE CONNECTION DROP --- */
+        .connection-lost {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 200; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .noise-gif {
+            width: 100%; height: 100%; position: absolute; opacity: 0.2;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+        }
+        .conn-text { z-index: 201; color: white; font-size: 1.5rem; background: blue; padding: 10px; }
+
+        /* --- 18. INTRUSIVE TOOLTIP --- */
+        #mind-tooltip {
+            position: fixed; background: red; color: white; padding: 5px 10px;
+            font-weight: bold; font-size: 0.9rem; pointer-events: none;
+            transform: translate(15px, 15px); z-index: 300; display: none;
+            box-shadow: 5px 5px 0 black; will-change: top, left;
+        }
+
+        /* --- FX LAYERS (Optimized) --- */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+            z-index: 90; pointer-events: none;
+        }
+        .screen-fx {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.9) 100%);
+            z-index: 91; pointer-events: none; opacity: 0.8;
+            animation: screenFlicker 0.1s infinite;
+        }
+        .noise {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            z-index: 92; pointer-events: none;
+        }
+        @keyframes screenFlicker { 0% { opacity: 0.8; } 50% { opacity: 0.82; } 100% { opacity: 0.8; } }
+        
+        /* 6. WEBCAM REC */
+        .rec-ui {
+            position: fixed; top: 20px; right: 30px; z-index: 96;
+            display: flex; align-items: center; gap: 10px; pointer-events: none;
+        }
+        .rec-dot { width: 15px; height: 15px; background: red; border-radius: 50%; animation: recBlink 1s infinite; }
+        .rec-text { color: red; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; }
+        @keyframes recBlink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        .cam-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            border: 50px solid rgba(0,0,0,0); box-shadow: inset 0 0 0 2px rgba(255, 0, 0, 0.1);
+            z-index: 80; pointer-events: none;
+        }
+        .cam-frame::before, .cam-frame::after { content: ""; position: absolute; width: 40px; height: 40px; border: 2px solid rgba(255, 0, 0, 0.3); }
+        .cam-frame::before { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+        .cam-frame::after { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+        /* UI ELEMENTS */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 95; pointer-events: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 8vh;
+        }
+
+        /* ТЕКСТ ВЫДЕЛЯЕТСЯ И МЕНЯЕТ КУРСОР */
+        #ui-layer h1, #ui-layer .desc-text, #ui-layer .status-text {
+            pointer-events: auto; user-select: text; cursor: text;
+        }
+
+        .glow-text { text-shadow: 0 0 5px currentColor; }
+        h1 {
+            color: #ff3333; font-size: 3.5rem; text-transform: uppercase; margin: 0 0 1rem 0;
+            font-family: 'Rubik Glitch', cursive; letter-spacing: 2px;
+        }
+        .desc-text {
+            color: #aaa; font-size: 1rem; text-transform: uppercase; background: rgba(10, 10, 10, 0.85);
+            padding: 8px 16px; border: 1px solid #333; letter-spacing: 0.15em; margin-bottom: 10px;
+        }
+        .status-text { color: #ff3333; font-size: 0.8rem; letter-spacing: 0.05em; margin-top: 10px; opacity: 0.9; }
+
+        /* GLITCH OPTIMIZED */
+        .glitch-heavy { position: relative; }
+        .glitch-heavy::before, .glitch-heavy::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; pointer-events: none; }
+        .glitch-heavy::before { left: -2px; text-shadow: 2px 0 #00ffff; clip-path: inset(0 0 0 0); animation: gh 3s infinite linear alternate-reverse; z-index: -1; }
+        .glitch-heavy::after { left: 2px; text-shadow: -2px 0 #ff00ff; clip-path: inset(0 0 0 0); animation: gh 2s infinite linear alternate-reverse; z-index: -2; }
+        .glitch-lite { animation: ts 4s infinite; display: inline-block; }
+        @keyframes gh { 0% { clip-path: inset(10% 0 80% 0); transform: translate(-1px,0); } 40% { clip-path: inset(40% 0 50% 0); transform: translate(1px,0); } 100% { clip-path: inset(20% 0 60% 0); transform: translate(0,0); } }
+        @keyframes ts { 0% { transform: translate(0,0); } 96% { transform: translate(-1px, 1px); } 98% { transform: translate(0, 1px); } 100% { transform: translate(0,0); } }
+
+        /* TICKER */
+        .ticker-wrap { position: fixed; bottom: 40px; width: 100%; height: 2rem; background-color: rgba(0,0,0,0.9); border-top: 1px solid #ff3333; border-bottom: 1px solid #ff3333; overflow: hidden; z-index: 94; pointer-events: none; display: flex; align-items: center; }
+        .ticker { display: flex; white-space: nowrap; animation: ticker 40s linear infinite; }
+        .ticker__item { padding: 0 2rem; font-size: 1rem; color: #ff3333; text-shadow: 0 0 5px #ff0000; }
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; opacity: 0; pointer-events: none; z-index: 99; transition: opacity 1s ease; }
+        .fade-out { opacity: 1 !important; }
+        .system-failure { filter: contrast(150%) brightness(120%) hue-rotate(-10deg); }
+        .nuclear-flash { filter: invert(100%) contrast(200%); }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="screen-fx"></div>
+    <div class="noise"></div>
+    
+    <div id="access-denied">ДОСТУП ЗАПРЕЩЕН<br>ГОСУДАРСТВОМ</div>
+    <div class="trap-alert" id="trap-alert"><div class="trap-text">СИДЕТЬ</div></div>
+    <div class="cam-frame"></div>
+    <div class="rec-ui"><div class="rec-dot"></div><div class="rec-text">REC [CAM_04]</div></div>
+    <div class="connection-lost" id="conn-lost"><div class="noise-gif"></div><div class="conn-text">RECONNECTING TO KGB SERVERS...</div></div>
+
+    <div id="mind-tooltip"></div>
+
+    <div id="ui-layer">
+        <h1 class="glow-text cypher-text glitch-heavy">ГОСУСЛУГИ: ВЫБОР СУДЬБЫ</h1>
+        <br>
+        <div class="desc-text glow-text cypher-text glitch-lite">Укажите, в чьем окопе вы хотите сгнить.</div>
+        <br>
+        <div class="status-text glow-text cypher-text glitch-lite">[СТАТУС: ВАШ ВЫБОР НИ НА ЧТО НЕ ВЛИЯЕТ.]</div>
+    </div>
+
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="ticker__item">/// СИСТЕМА ПЕРЕГРУЖЕНА</span>
+            <span class="ticker__item">/// ОЖИДАНИЕ ОПЕРАТОРА: 49 ЛЕТ</span>
+            <span class="ticker__item">/// ВАШ СОЦИАЛЬНЫЙ РЕЙТИНГ: ОТРИЦАТЕЛЬНЫЙ</span>
+            <span class="ticker__item">/// НЕ ВЫКЛЮЧАЙТЕ ПИТАНИЕ, ЗА ВАМИ УЖЕ ВЫЕХАЛИ</span>
+        </div>
+        <div class="ticker">
+            <span class="ticker__item">/// СИСТЕМА ПЕРЕГРУЖЕНА</span>
+            <span class="ticker__item">/// ОЖИДАНИЕ ОПЕРАТОРА: 49 ЛЕТ</span>
+            <span class="ticker__item">/// ВАШ СОЦИАЛЬНЫЙ РЕЙТИНГ: ОТРИЦАТЕЛЬНЫЙ</span>
+            <span class="ticker__item">/// НЕ ВЫКЛЮЧАЙТЕ ПИТАНИЕ, ЗА ВАМИ УЖЕ ВЫЕХАЛИ</span>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+    <div id="overlay"></div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { RoundedBoxGeometry } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/geometries/RoundedBoxGeometry.js';
+        import gsap from 'https://cdn.skypack.dev/gsap@3.12.2';
+
+        console.log("Initializing: DOOMER OPTIMIZED BUILD");
+
+        // --- 1. TAB HIJACKING ---
+        const defaultTitle = document.title;
+        const alertTitle = "КУДА ТЫ? ОНИ УЖЕ ТУТ";
+        const defaultIcon = "data:;base64,iVBORw0KGgo="; 
+        const panicIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='red'/%3E%3C/svg%3E";
+        
+        window.onblur = () => { document.title = alertTitle; document.getElementById('favicon').href = panicIcon; };
+        window.onfocus = () => { document.title = defaultTitle; document.getElementById('favicon').href = defaultIcon; };
+
+        // --- 2. CLIPBOARD POISON ---
+        document.addEventListener('copy', (e) => {
+            e.preventDefault();
+            e.clipboardData.setData('text/plain', 'ВАШ IP ЗАФИКСИРОВАН. ОЖИДАЙТЕ НАРЯД.');
+        });
+
+        // --- 4. RIGHT CLICK DENIAL ---
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const box = document.getElementById('access-denied');
+            box.style.display = 'block';
+            setTimeout(() => box.style.display = 'none', 1000);
+        });
+
+        // --- 6. CONSOLE PROPAGANDA ---
+        console.log("%cВНИМАНИЕ! %cПопытка взлома государственных систем фиксируется. Статья 272 УК РФ.", "color:red; font-size: 30px; font-weight: bold;", "color:white; font-size: 16px; background: red; padding: 5px;");
+        console.log("%cНЕ ПЫТАЙСЯ НИЧЕГО МЕНЯТЬ.", "color: red; font-size: 20px;");
+
+        // --- 1. URL WHISPERS ---
+        const urlPhrases = ["/watching_you", "/do_not_run", "/id_expired", "/no_escape", "/citizen_debt"];
+        setInterval(() => {
+            if(Math.random() > 0.7) {
+                history.replaceState(null, null, "#" + urlPhrases[Math.floor(Math.random() * urlPhrases.length)]);
+            }
+        }, 3000);
+
+        // --- 7. RESOLUTION BIT-CRUSH (Optimized) ---
+        setInterval(() => {
+            if(renderer && Math.random() > 0.8) {
+                renderer.setPixelRatio(0.1); 
+                setTimeout(() => renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)), 200 + Math.random() * 300);
+            }
+        }, 12000);
+
+        // --- 8. FAKE CONNECTION DROP ---
+        setInterval(() => {
+            if(Math.random() > 0.985) {
+                const screen = document.getElementById('conn-lost');
+                screen.style.display = 'flex';
+                setTimeout(() => { screen.style.display = 'none'; }, 1000 + Math.random() * 1500);
+            }
+        }, 15000);
+
+        // --- TEXT SCRAMBLE ---
+        function initTextScramble() {
+            const targets = document.querySelectorAll('.cypher-text');
+            const chars = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789!@#$%^&*()_+-=[]';
+            targets.forEach((el, index) => {
+                const originalText = el.innerText;
+                el.setAttribute('data-text', originalText);
+                el.innerText = '';
+                setTimeout(() => {
+                    let iteration = 0;
+                    const interval = setInterval(() => {
+                        el.innerText = originalText.split('').map((letter, i) => {
+                            if (i < iteration) return originalText[i];
+                            return chars[Math.floor(Math.random() * chars.length)];
+                        }).join('');
+                        if (iteration >= originalText.length) clearInterval(interval);
+                        iteration += el.tagName === 'H1' ? 0.3 : 0.8; 
+                    }, 30);
+                }, 500 + (index * 600));
+            });
+        }
+
+        // --- SHUFFLE FUNCTION (NEW) ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- THREE.JS ---
+        const config = {
+            // APPLY SHUFFLE HERE
+            baseCards: shuffleArray(['elkin', 'ebuchiy', 'abor', 'bogdan', 'timur', 'sanya']),
+            texturePath: 'images/',
+            backTexture: 'back.jpg',
+            bgColor: 0x050505,
+            edgeColor: 0x101010,   
+            emissiveColor: 0xff0000,   
+            wheelRadius: 18,
+            baseSpeed: 0.0008,
+            friction: 0.96,
+            repeats: 4 
+        };
+
+        let scene, camera, renderer, bgMesh, cardGroup, raycaster, mouse;
+        let particlesMesh, blueLight, redLight, mouseLight;
+        let lightBattery = 1.0; 
+        
+        // Переменные для отслеживания мыши
+        let mouseX = 0, mouseY = 0;
+        let lastMouseX = 0, lastMouseY = 0;
+        let mouseSpeed = 0;
+
+        const visualMeshes = []; 
+        const hitBoxes = [];        
+        let isTransitioning = false;
+        let hoveredHitbox = null; 
+        let globalWheelAngle = 0;
+        let wheelVelocity = 0;
+        const wheelCenter = new THREE.Vector3(0, -16, 0);
+
+        const mindTooltip = document.getElementById('mind-tooltip');
+        const thoughts = ["ОН ВСЁ ЗНАЕТ", "НЕ ОТКРЫВАЙ", "СЛЕЖКА", "УДАЛИ ИСТОРИЮ", "ВЫХОДА НЕТ", "ОШИБКА ДНК"];
+        const trapAlert = document.getElementById('trap-alert');
+
+        function init() {
+            initTextScramble();
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050505, 0.02);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 0, 16);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Optimized Shadows
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0x111111, 0.5);
+            scene.add(ambientLight);
+            
+            // Optimized Spotlight (меньше карта теней)
+            const spotLight = new THREE.SpotLight(0xddeeff, 1.2);
+            spotLight.position.set(0, 20, 25);
+            spotLight.angle = Math.PI / 6;
+            spotLight.penumbra = 0.5;
+            spotLight.castShadow = true;
+            spotLight.shadow.mapSize.width = 1024; 
+            spotLight.shadow.mapSize.height = 1024;
+            scene.add(spotLight);
+
+            blueLight = new THREE.PointLight(0x0044ff, 2.5, 50);
+            blueLight.position.set(-18, 0, 8); scene.add(blueLight);
+            redLight = new THREE.PointLight(0xff0022, 2.5, 50);
+            redLight.position.set(18, 0, 8); scene.add(redLight);
+
+            mouseLight = new THREE.PointLight(0xaaccff, 4.0, 12);
+            mouseLight.position.set(0, 0, 10);
+            scene.add(mouseLight);
+
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 800;
+            const posArray = new Float32Array(particlesCount * 3);
+            for(let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 40; 
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particlesMaterial = new THREE.PointsMaterial({ size: 0.08, color: 0xaaaaaa, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+            particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+
+            createBackground();
+            createCards();
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('click', onClick);
+            window.addEventListener('wheel', onMouseWheel);
+
+            animate();
+        }
+
+        function createBackground() {
+            const textureLoader = new THREE.TextureLoader();
+            const loadBgTex = (path) => textureLoader.load(path);
+            const colorMap = loadBgTex('images/concrete_diff.jpg');
+            const normMap = loadBgTex('images/concrete_norm.jpg');
+            const roughMap = loadBgTex('images/concrete_rough.jpg');
+            if(colorMap) { [colorMap, normMap, roughMap].forEach(tex => { if(tex) { tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(4, 4); } }); }
+            const geometry = new THREE.PlaneGeometry(70, 70);
+            const material = new THREE.MeshStandardMaterial({
+                map: colorMap || null, normalMap: normMap || null, roughnessMap: roughMap || null,
+                color: 0x555555, roughness: 0.8, metalness: 0.1, bumpScale: 0.02
+            });
+            bgMesh = new THREE.Mesh(geometry, material);
+            bgMesh.position.z = -5; bgMesh.receiveShadow = true; scene.add(bgMesh);
+        }
+
+        function createCards() {
+            cardGroup = new THREE.Group();
+            scene.add(cardGroup);
+            const textureLoader = new THREE.TextureLoader();
+            const loadTex = (path) => textureLoader.load(path);
+            const backTexture = loadTex(config.texturePath + config.backTexture);
+            // Optimized Geometry (less segments)
+            const visualGeometry = new THREE.BoxGeometry(3, 4.2, 0.05);
+            const hitGeometry = new THREE.BoxGeometry(3.2, 4.4, 0.5); 
+            const edgeMaterial = new THREE.MeshStandardMaterial({ color: config.edgeColor, roughness: 0.9, metalness: 0.1, emissive: config.emissiveColor, emissiveIntensity: 0.0 });
+
+            let fullDeck = [];
+            for (let i = 0; i < config.repeats; i++) { fullDeck = fullDeck.concat(config.baseCards); }
+            const angleStep = (Math.PI * 2) / fullDeck.length;
+
+            fullDeck.forEach((name, i) => {
+                const faceTexture = loadTex(config.texturePath + name + '.jpg');
+                const faceMat = new THREE.MeshStandardMaterial({ map: faceTexture, color: 0xffffff, roughness: 0.6, metalness: 0.0 });
+                const backMat = new THREE.MeshStandardMaterial({ map: backTexture, roughness: 0.4, metalness: 0.4 });
+                const visualMesh = new THREE.Mesh(visualGeometry, [edgeMaterial, edgeMaterial, edgeMaterial, edgeMaterial, faceMat, backMat]);
+                visualMesh.castShadow = true; visualMesh.receiveShadow = true;
+                const hitMesh = new THREE.Mesh(hitGeometry, new THREE.MeshBasicMaterial({ visible: false }));
+                const baseAngle = i * angleStep;
+                visualMesh.userData = { name: name, baseAngle: baseAngle };
+                hitMesh.userData = { name: name, baseAngle: baseAngle, visualTarget: visualMesh };
+                updateWheelPosition(visualMesh, baseAngle); updateWheelPosition(hitMesh, baseAngle);
+                cardGroup.add(visualMesh); cardGroup.add(hitMesh);
+                visualMeshes.push(visualMesh); hitBoxes.push(hitMesh);
+            });
+        }
+
+        function updateWheelPosition(mesh, angle) {
+            const x = Math.sin(angle) * config.wheelRadius;
+            const y = wheelCenter.y + Math.cos(angle) * config.wheelRadius;
+            mesh.position.set(x, y, 0); mesh.rotation.z = -angle; mesh.rotation.y = Math.PI; mesh.rotation.x = 0;
+        }
+
+        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+        
+        function onMouseMove(event) { 
+            // Lightweight logic here, heavy stuff in animate
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+            
+            // Normalized coords for Raycaster
+            mouse.x = (mouseX / window.innerWidth) * 2 - 1; 
+            mouse.y = -(mouseY / window.innerHeight) * 2 + 1; 
+
+            // Tooltip follow
+            mindTooltip.style.left = mouseX + 'px';
+            mindTooltip.style.top = mouseY + 'px';
+        }
+
+        function onMouseWheel(event) { 
+            if(isTransitioning) return;
+            wheelVelocity += event.deltaY * 0.0003; 
+            wheelVelocity = Math.max(-0.06, Math.min(0.06, wheelVelocity)); 
+        }
+        
+        function onClick(event) {
+            if (isTransitioning) return;
+            // Проверяем, не выделил ли пользователь текст (если да - не кликаем)
+            if (window.getSelection().toString().length > 0) return;
+            
+            if (hoveredHitbox) triggerSelection(hoveredHitbox.userData.visualTarget);
+        }
+
+        function triggerSelection(selectedMesh) {
+            isTransitioning = true;
+            document.body.classList.add('system-failure'); 
+            const targetName = selectedMesh.userData.name;
+            const uiLayer = document.getElementById('ui-layer');
+            uiLayer.style.transition = 'opacity 0.2s'; uiLayer.style.opacity = 0;
+            selectedMesh.userData.isSelected = true; 
+            selectedMesh.material.forEach(mat => {
+                if(mat.emissive) {
+                     mat.color.setHex(0xff0000); 
+                     gsap.to(mat, { emissiveIntensity: 5.0, duration: 0.1, yoyo: true, repeat: 5 }); 
+                }
+            });
+            // Datamosh clones
+            for(let k=0; k<5; k++) {
+                setTimeout(() => {
+                    const ghost = selectedMesh.clone(); ghost.position.copy(selectedMesh.position); ghost.rotation.copy(selectedMesh.rotation);
+                    ghost.material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.3 });
+                    scene.add(ghost);
+                    gsap.to(ghost.position, { x: ghost.position.x + (Math.random()-0.5)*2, duration: 0.5 });
+                    gsap.to(ghost.material, { opacity: 0, duration: 0.5, onComplete: () => scene.remove(ghost) });
+                }, k * 100);
+            }
+            gsap.to(selectedMesh.position, { x: 0, y: 0, z: 7, duration: 1.5, ease: "power2.inOut" });
+            gsap.to(selectedMesh.rotation, { x: Math.PI * 2, y: 0, z: 0, duration: 1.5, ease: "power2.inOut" });
+            visualMeshes.forEach(mesh => {
+                if (mesh !== selectedMesh) {
+                    gsap.to(mesh.position, { y: -60, duration: 1.2, ease: "power2.in", delay: 0.1 });
+                    gsap.to(mesh.rotation, { z: Math.random() * 0.5, duration: 1.2 });
+                }
+            });
+            setTimeout(() => { document.getElementById('overlay').classList.add('fade-out'); }, 1200);
+            setTimeout(() => { window.location.href = `people/${targetName}.html`; }, 2000);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            // const time = clock.getElapsedTime(); // Unused currently, simple rotation
+
+            // --- LOGIC LOOP (Throttled via RequestAnimationFrame) ---
+            
+            // 1. Calculate Mouse Speed
+            const dx = mouseX - lastMouseX;
+            const dy = mouseY - lastMouseY;
+            mouseSpeed = Math.sqrt(dx*dx + dy*dy);
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+
+            // 2. Chromatic Shake (Optimized: Transform instead of Filter)
+            const canvas = document.getElementById('canvas-container');
+            if (mouseSpeed > 30) {
+                // Вместо тяжелого filter используем легкий transform
+                const shakeX = (Math.random() - 0.5) * 4;
+                const shakeY = (Math.random() - 0.5) * 4;
+                canvas.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
+            } else {
+                canvas.style.transform = 'translate(0, 0)';
+            }
+
+            // 3. Flashlight Recharging
+            if (mouseSpeed > 20) lightBattery = Math.min(1.0, lightBattery + 0.02);
+
+            // 4. Cursor Trap Logic
+            if (mouseY < 50) trapAlert.classList.add('trap-active'); 
+            else trapAlert.classList.remove('trap-active');
+
+            // --- THREE.JS RENDER LOOP ---
+            
+            if (particlesMesh) particlesMesh.rotation.y += 0.001;
+
+            // Flashlight Logic
+            lightBattery = Math.max(0, lightBattery - 0.001); 
+            if(mouseLight) {
+                let flicker = 1;
+                if(lightBattery < 0.2) flicker = Math.random() > 0.5 ? 0 : 1;
+                mouseLight.intensity = 4.0 * lightBattery * flicker;
+                mouseLight.position.x = mouse.x * 20;
+                mouseLight.position.y = mouse.y * 15;
+            }
+
+            // Flickering Ambient
+            if (Math.random() > 0.96) {
+                const flicker = 2.5 + (Math.random() - 0.5) * 1.5;
+                if(Math.random() > 0.5) blueLight.intensity = flicker; else redLight.intensity = flicker;
+            } else {
+                blueLight.intensity = THREE.MathUtils.lerp(blueLight.intensity, 2.5, 0.1);
+                redLight.intensity = THREE.MathUtils.lerp(redLight.intensity, 2.5, 0.1);
+            }
+
+            if (!isTransitioning) {
+                globalWheelAngle += config.baseSpeed + wheelVelocity;
+                wheelVelocity *= config.friction;
+                
+                // Tilt Group based on mouse
+                gsap.to(cardGroup.rotation, { x: mouse.y * 0.03, y: mouse.x * 0.03, duration: 0.5 }); 
+            }
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(hitBoxes);
+            if (intersects.length > 0) {
+                hoveredHitbox = intersects[0].object;
+                if(!isTransitioning) {
+                    mindTooltip.style.display = 'block';
+                    if(Math.random() > 0.95) mindTooltip.innerText = thoughts[Math.floor(Math.random()*thoughts.length)];
+                }
+            } else {
+                hoveredHitbox = null;
+                mindTooltip.style.display = 'none';
+            }
+
+            // Object Updates
+            for (let i = 0; i < visualMeshes.length; i++) {
+                const visual = visualMeshes[i];
+                const hitbox = hitBoxes[i];
+                if (visual.userData.isSelected) continue;
+
+                let currentAngle = visual.userData.baseAngle + globalWheelAngle;
+                let wheelX = Math.sin(currentAngle) * config.wheelRadius;
+                let wheelY = wheelCenter.y + Math.cos(currentAngle) * config.wheelRadius;
+
+                hitbox.position.set(wheelX, wheelY, 0);
+                hitbox.rotation.z = -currentAngle; hitbox.rotation.y = Math.PI; hitbox.rotation.x = 0;
+
+                let targetX = wheelX, targetY = wheelY, targetZ = 0, targetScale = 1.0, targetEmissive = 0.0;
+                
+                if (hoveredHitbox === hitbox && !isTransitioning) {
+                    targetX += Math.sin(currentAngle); targetY += Math.cos(currentAngle);
+                    targetZ = 4.0; targetScale = 1.15; targetEmissive = 1.5;
+                }
+
+                visual.position.x = THREE.MathUtils.lerp(visual.position.x, targetX, 0.1);
+                visual.position.y = THREE.MathUtils.lerp(visual.position.y, targetY, 0.1);
+                visual.position.z = THREE.MathUtils.lerp(visual.position.z, targetZ, 0.1);
+                visual.scale.setScalar(THREE.MathUtils.lerp(visual.scale.x, targetScale, 0.1));
+                visual.rotation.z = THREE.MathUtils.lerp(visual.rotation.z, -currentAngle, 0.1);
+                visual.material[0].emissiveIntensity = THREE.MathUtils.lerp(visual.material[0].emissiveIntensity, targetEmissive, 0.1);
+            }
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
