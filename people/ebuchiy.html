@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERROR: EBUCHIY.EXE</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap');
+
+        /* --- БАЗА (BROKEN) --- */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; color: #d0d0d0;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+        }
+
+        /* --- FX LAYERS --- */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(255,0,255,0.1) 2px, rgba(255,0,255,0.1) 4px);
+            z-index: 90; pointer-events: none;
+        }
+        .vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,1) 100%);
+            z-index: 91; pointer-events: none;
+        }
+        
+        /* GLITCH FLICKER FOR BODY */
+        .glitch-wrapper {
+            animation: bodyFlicker 0.1s infinite;
+        }
+        @keyframes bodyFlicker {
+            0% { opacity: 1; transform: translateX(0); }
+            95% { opacity: 1; transform: translateX(0); }
+            96% { opacity: 0.8; transform: translateX(-2px); filter: hue-rotate(90deg); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        /* --- GRID LAYOUT --- */
+        .container {
+            max-width: 1200px; margin: 0 auto; padding: 40px 20px;
+            display: grid; grid-template-columns: 350px 1fr; gap: 40px;
+            position: relative; z-index: 10;
+            margin-top: 2vh; padding-bottom: 100px;
+        }
+
+        /* --- LEFT COL --- */
+        .left-col { display: flex; flex-direction: column; gap: 20px; }
+
+        .stamp-header {
+            color: #ff00ff; font-family: 'Rubik Glitch', cursive; font-size: 3.5rem;
+            text-align: center; text-shadow: 2px 2px 0px #00ffff;
+            animation: textShake 0.2s infinite; 
+            border: 5px double #ff00ff; padding: 5px; transform: rotate(5deg);
+        }
+        @keyframes textShake { 0% { transform: translate(1px, 1px) rotate(5deg); } 25% { transform: translate(-1px, -2px) rotate(4deg); } 50% { transform: translate(-3px, 0px) rotate(6deg); } 75% { transform: translate(3px, 2px) rotate(5deg); } 100% { transform: translate(1px, -1px) rotate(5deg); } }
+
+        .photo-frame {
+            border: 2px solid #ff00ff; position: relative; background: #000; overflow: hidden;
+        }
+        .mugshot {
+            width: 100%; height: auto; display: block;
+            filter: contrast(150%) saturate(0);
+            animation: imgGlitch 2s infinite;
+        }
+        @keyframes imgGlitch {
+            0% { filter: contrast(150%) saturate(0); }
+            50% { filter: contrast(200%) invert(100%); }
+            52% { filter: contrast(150%) saturate(0); }
+            100% { filter: contrast(150%) saturate(0); }
+        }
+
+        /* MAP WIDGET (BROKEN) */
+        .sector-map {
+            border: 1px solid #ff00ff; background: #000; height: 200px; position: relative;
+            overflow: hidden;
+        }
+        .map-grid {
+            width: 100%; height: 100%;
+            background-image: repeating-linear-gradient(45deg, #1a001a 25%, transparent 25%, transparent 75%, #1a001a 75%, #1a001a), repeating-linear-gradient(45deg, #1a001a 25%, #000 25%, #000 75%, #1a001a 75%, #1a001a);
+            background-position: 0 0, 10px 10px; background-size: 20px 20px;
+            animation: mapScroll 1s linear infinite;
+        }
+        @keyframes mapScroll { from { background-position: 0 0; } to { background-position: 20px 20px; } }
+        
+        .map-point {
+            position: absolute; width: 50px; height: 50px; border-radius: 50%;
+            background: radial-gradient(circle, #ff00ff 0%, transparent 70%);
+            top: 40%; left: 40%;
+            animation: pulseBig 0.5s infinite alternate;
+        }
+        @keyframes pulseBig { from { transform: scale(1); } to { transform: scale(3); opacity: 0.5; } }
+
+        .map-label {
+            position: absolute; bottom: 5px; left: 5px; font-size: 1rem; color: #ff00ff; font-weight: bold;
+            background: black; padding: 2px;
+        }
+
+        /* --- RIGHT COL --- */
+        .dossier-header {
+            border-bottom: 2px solid #ff00ff; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 10px;
+        }
+        h1 { font-family: 'Rubik Glitch', cursive; color: #ff00ff; font-size: 3.5rem; margin: 0; text-shadow: -2px 0 #00ffff; }
+        .id-num { font-size: 1.2rem; color: #ff00ff; background: #220022; padding: 5px; }
+
+        .data-row {
+            display: flex; justify-content: space-between; border-bottom: 1px dashed #550055; padding: 10px 0; font-size: 1.1rem;
+        }
+        .label { color: #880088; text-transform: uppercase; }
+        .value { color: #eee; font-weight: bold; text-shadow: 0 0 5px #ff00ff; }
+        
+        .med-card {
+            margin-top: 20px; border: 1px solid #ff00ff; padding: 15px; background: rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 20px #ff00ff;
+        }
+        .med-title { color: #ff00ff; font-weight: bold; display: block; margin-bottom: 10px; text-transform: uppercase; }
+        .med-list { list-style: none; padding-left: 0; color: #d0d0d0; margin: 0; font-size: 0.9rem; font-family: 'Courier New'; }
+        .med-list li::before { content: ">> ERROR: "; color: red; }
+
+        .bio-box {
+            margin-top: 20px; background: #0a000a; border: 1px solid #ff00ff; padding: 20px;
+            font-size: 0.95rem; line-height: 1.6; color: #e0e0e0;
+        }
+
+        .search-history {
+            margin-top: 20px; background: #000; border: 1px solid #ff00ff; padding: 10px;
+            font-family: 'Courier New', monospace; font-size: 0.8rem; color: #ff00ff;
+            overflow: hidden;
+        }
+        
+        /* BANNER */
+        .banner-ad {
+            margin-top: 20px; background: #ff00ff; color: #000; padding: 10px;
+            text-align: center; font-weight: bold; font-family: 'Arial', sans-serif;
+            border: 2px solid #000; cursor: help; text-transform: uppercase;
+            animation: rainbow 0.1s infinite;
+        }
+        @keyframes rainbow { 0% { background: #ff00ff; } 50% { background: #00ffff; } 100% { background: #ffff00; } }
+
+        .controls { margin-top: 30px; display: flex; gap: 20px; }
+        
+        /* FIXED BUTTONS */
+        .btn {
+            background: #000; border: 2px solid #ff00ff; color: #ff00ff;
+            padding: 15px; font-family: 'Rubik Glitch', monospace; font-size: 1.5rem;
+            cursor: pointer; text-transform: uppercase; flex: 1; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; text-decoration: none;
+        }
+        .btn:hover { background: #ff00ff; color: #fff; transform: scale(1.05); }
+        
+        .btn-secondary { 
+            border-color: #880088; color: #880088; font-size: 1.2rem; 
+        }
+        .btn-secondary:hover {
+            background: #330033; color: #ff00ff; border-color: #ff00ff;
+        }
+
+        /* SKREPKA (SCARED) */
+        .skrepka-bot {
+            position: fixed; bottom: 20px; right: 20px; width: 280px;
+            background: #000; border: 2px solid red; 
+            color: red; font-family: 'Arial', sans-serif; font-size: 0.8rem; z-index: 200;
+            display: flex; flex-direction: column; box-shadow: 10px 10px 0 red;
+            animation: botShake 0.1s infinite;
+        }
+        @keyframes botShake { 0% { transform: translate(0,0); } 50% { transform: translate(2px, 2px); } 100% { transform: translate(0,0); } }
+        .bot-header { background: red; color: black; padding: 2px 5px; font-weight: bold; }
+        .bot-body { padding: 10px; display: flex; align-items: center; gap: 10px; }
+        .bot-avatar { font-size: 2.5rem; filter: invert(1); }
+
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } .skrepka-bot { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="glitch-wrapper">
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="container">
+        <div class="left-col">
+            <div class="stamp-header">ЕБУЧИЙ</div>
+            
+            <div class="photo-frame">
+                <img src="../images/ebuchiy.jpg" alt="[DATA_CORRUPTED]" class="mugshot">
+            </div>
+
+            <div class="sector-map">
+                <div class="map-grid"></div>
+                <div class="map-point"></div>
+                <div class="map-label">ЛОКАЦИЯ: [НЕ ОПРЕДЕЛЕНО]</div>
+            </div>
+
+            <div class="bio-box cypher-text" style="font-style: italic; border-color: #ff00ff; color: #ff00ff;">
+                "01000111... Я нассал в лифте, но это был не я, а твой страх. Дай сотку или прокляну."
+                <br><br>— Ебучий (голос из вентиляции)
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="dossier-header">
+                <h1 class="cypher-text">ОБЪЕКТ "ЕБУЧИЙ"</h1>
+                <span class="id-num">ID: 666-X</span>
+            </div>
+
+            <div class="data-block">
+                <div class="data-row"><span class="label">ИМЯ:</span><span class="value cypher-text">НЕИЗВЕСТНО</span></div>
+                <div class="data-row"><span class="label">РАСА:</span><span class="value cypher-text">ГРИБ / ПЛЕСЕНЬ?</span></div>
+                <div class="data-row"><span class="label">ОПАСНОСТЬ:</span><span class="value" style="color:#ff00ff">КЕТЕР (ПСИХОТРОННАЯ)</span></div>
+                <div class="data-row"><span class="label">СТАТУС:</span><span class="value cypher-text">НАХОДИТСЯ ВЕЗДЕ</span></div>
+            </div>
+
+            <div class="med-card">
+                <span class="med-title">/// АНАЛИЗ ДНК:</span>
+                <ul class="med-list cypher-text">
+                    <li>Субъект состоит из окурков и ярости</li>
+                    <li>Группа крови: Жигулевское (нефильтрованное)</li>
+                    <li>Мозг: Отсутствует (заменен на генератор шума)</li>
+                    <li>Аура: Смердит</li>
+                </ul>
+            </div>
+
+            <div class="bio-box cypher-text">
+                > ОПИСАНИЕ СУЩНОСТИ:<br>
+                Ебучий — это не фамилия, это состояние души. Никто не знает, откуда он взялся. Он просто появляется на кухне в 3 часа ночи и просит соль, даже если у тебя нет кухни. <br><br>
+                > ПОВАДКИ:<br>
+                Сверлит стены перфоратором без электричества. Знает пин-коды от всех домофонов. Его боятся коллекторы, свидетели Иеговы и даже крысы. Если долго смотреть на его фото, начинает болеть печень.
+                <br><br>
+                <span style="color: #ff00ff">!!! ВНИМАНИЕ: НЕ ПЫТАЙТЕСЬ ВСТУПИТЬ В ДИАЛОГ. ОН ОТВЕТИТ СКРИМЕРОМ.</span>
+            </div>
+
+             <div class="search-history">
+                <span style="color:white; border-bottom: 1px solid white;">/// ЛОГИ НЕЙРОИНТЕРФЕЙСА:</span><br>
+                <span class="search-item">> как удалить себя из реальности</span>
+                <span class="search-item">> cursed_images.zip скачать без смс</span>
+                <span class="search-item">> рецепт супа из обоев</span>
+                <span class="search-item">> 0100100100101110...</span>
+                <span class="search-item">> SYSTEM_CRITICAL_FAILURE</span>
+            </div>
+
+            <div class="banner-ad">
+                👁️ ТЫ НЕ ОДИН 👁️<br>
+                <span>ОНИ СМОТРЯТ</span><br>
+            </div>
+
+            <div class="controls">
+                <a href="../index.html" class="btn btn-secondary">&lt; БЕЖАТЬ</a>
+                <button class="btn" id="select-btn">РИСКНУТЬ</button>
+            </div>
+            <div id="error-msg" style="color: #ff00ff; margin-top: 15px; display: none; text-align: center; font-family: 'Rubik Glitch'; font-size: 1.5rem;">
+                FATAL_ERROR: ДУША НЕ ОБНАРУЖЕНА.
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="skrepka-bot">
+        <div class="bot-header"><span>SYSTEM_ALERT</span><span>!!!</span></div>
+        <div class="bot-body">
+            <div class="bot-avatar">⚠️</div>
+            <div class="bot-text">
+                <b>ОШИБКА! ОШИБКА!</b><br>
+                Этот объект не числится в базах КГБ.<br>
+                Мне страшно. Закрой вкладку.
+                <div style="margin-top:5px; display:flex; justify-content:flex-end; gap:5px;">
+                    <button style="cursor:not-allowed;" disabled>Я не могу</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GLITCH TEXT SCRIPT
+        const chars = '█▓▒░@#$!%^&*()_+=-?/>.<,'; 
+        function scrambleText(element) {
+            const originalText = element.innerText;
+            let iteration = 0;
+            const interval = setInterval(() => {
+                element.innerText = originalText.split('').map((letter, i) => {
+                    if (i < iteration) return originalText[i];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                if (iteration >= originalText.length) clearInterval(interval);
+                iteration += 1; // Faster
+            }, 20);
+        }
+        document.querySelectorAll('.cypher-text').forEach(el => scrambleText(el));
+
+        const btn = document.getElementById('select-btn');
+        const err = document.getElementById('error-msg');
+        btn.addEventListener('click', () => {
+            btn.innerText = "666..."; 
+            // Aggressive Shake
+            document.body.style.animation = "bodyFlicker 0.01s infinite";
+            
+            setTimeout(() => {
+                btn.innerText = "DEATH";
+                err.style.display = 'block';
+                // Play fake crash sound logic here if needed
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.5);
+                oscillator.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            }, 500); 
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ДЕЛО №777-ROIDS: ТИМУР (ХИМИК)</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap');
+
+        /* --- БАЗА --- */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #050505; color: #d0d0d0;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+        }
+
+        /* --- FX LAYERS --- */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(255, 69, 0, 0.08) 2px, rgba(255, 69, 0, 0.08) 4px);
+            z-index: 90; pointer-events: none;
+        }
+        .vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.98) 100%);
+            z-index: 91; pointer-events: none;
+        }
+
+        /* --- GRID LAYOUT --- */
+        .container {
+            max-width: 1200px; margin: 0 auto; padding: 40px 20px;
+            display: grid; grid-template-columns: 350px 1fr; gap: 40px;
+            position: relative; z-index: 10;
+            margin-top: 2vh; padding-bottom: 100px;
+        }
+
+        /* --- LEFT COL --- */
+        .left-col { display: flex; flex-direction: column; gap: 20px; }
+
+        /* STAMP */
+        .stamp-header {
+            color: #ff4500; font-family: 'Rubik Glitch', cursive; font-size: 2.0rem;
+            text-align: center; text-shadow: 0 0 15px #ff4500;
+            border: 4px solid #ff4500; padding: 5px; transform: rotate(1deg);
+            background: rgba(255, 69, 0, 0.15);
+            animation: pulseBorder 0.5s infinite;
+        }
+        @keyframes pulseBorder { 0% { border-color: #ff4500; } 50% { border-color: #fff; } 100% { border-color: #ff4500; } }
+
+        .photo-frame {
+            border: 3px solid #ff4500; position: relative; background: #000;
+        }
+        .mugshot {
+            width: 100%; height: auto; display: block;
+            filter: sepia(100%) hue-rotate(-40deg) saturate(3) contrast(1.3) brightness(0.8);
+        }
+        .photo-frame::after {
+            content: "[ СТАТУС: НА ВЕЧНОМ КУРСЕ ]"; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            color: #ff4500; font-size: 0.7rem; background: #000; padding: 2px 5px; border: 1px solid #ff4500;
+            width: 80%; text-align: center;
+        }
+
+        /* MAP WIDGET */
+        .sector-map {
+            border: 1px solid #ff4500; background: #1a0500; height: 200px; position: relative;
+            overflow: hidden; opacity: 1;
+        }
+        .map-grid {
+            width: 100%; height: 100%;
+            background-image: linear-gradient(#330a00 1px, transparent 1px), linear-gradient(90deg, #330a00 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .map-point {
+            position: absolute; width: 12px; height: 12px; border-radius: 50%; cursor: help;
+        }
+        .point-turnik { background: #ff4500; top: 40%; left: 30%; box-shadow: 0 0 15px #ff4500; } 
+        .point-dealer { background: #00ff00; top: 10%; left: 10%; border: 2px solid #fff; animation: blink 0.1s infinite; } 
+        .point-random { background: #fff; top: 20%; left: 80%; animation: blinkRandom 1s infinite; } 
+        
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes blinkRandom { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+
+        .map-label {
+            position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem; color: #ff4500; font-weight: bold;
+        }
+
+        /* --- RIGHT COL --- */
+        .dossier-header {
+            border-bottom: 2px solid #ff4500; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 10px;
+        }
+        h1 { font-family: 'Rubik Glitch', cursive; color: #ff4500; font-size: 3rem; margin: 0; text-shadow: 0 0 10px #ff0000; }
+        .id-num { font-size: 1.2rem; color: #ff4500; font-weight: bold; }
+
+        .data-row {
+            display: flex; justify-content: space-between; border-bottom: 1px dashed #661100; padding: 10px 0; font-size: 1.1rem;
+        }
+        .label { color: #cc3300; text-transform: uppercase; }
+        .value { color: #eee; font-weight: bold; }
+        
+        .med-card {
+            margin-top: 20px; border: 2px solid #ff4500; padding: 15px; background: rgba(255, 69, 0, 0.1);
+        }
+        .med-title { color: #ff4500; font-weight: bold; display: block; margin-bottom: 10px; text-transform: uppercase; text-shadow: 0 0 5px #ff0000; }
+        .med-list { list-style: none; padding-left: 0; color: #aaa; margin: 0; font-size: 0.9rem; }
+        .med-list li { margin-bottom: 8px; }
+        .med-list li::before { content: "[💉] "; color: #ff4500; }
+
+        .bio-box {
+            margin-top: 20px; background: rgba(30, 5, 0, 0.95); border: 1px solid #ff4500; padding: 20px;
+            font-size: 0.95rem; line-height: 1.6; color: #ffccaa;
+        }
+
+        .search-history {
+            margin-top: 20px; background: #000; border: 2px dashed #ff4500; padding: 10px;
+            font-family: 'Courier New', monospace; font-size: 0.8rem; color: #ff4500;
+        }
+        .search-item { display: block; margin-bottom: 2px; }
+
+        /* BANNER */
+        .banner-ad {
+            margin-top: 20px; background: #000; color: #fff; padding: 15px;
+            text-align: center; font-weight: bold; font-family: 'Arial', sans-serif;
+            border: 4px solid #ff4500; cursor: pointer; text-transform: uppercase;
+        }
+        .banner-ad span { font-size: 1.3rem; color: #ff4500; animation: rainbow 2s infinite; }
+        @keyframes rainbow { 0% {color: #ff4500;} 50% {color: white;} 100% {color: #ff4500;} }
+
+        .controls { margin-top: 30px; display: flex; gap: 20px; }
+        .btn {
+            background: transparent; border: 1px solid #ff4500; color: #ff4500;
+            padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 1.2rem;
+            cursor: pointer; text-transform: uppercase; flex: 1; transition: 0.2s;
+        }
+        .btn:hover { background: #ff4500; color: #000; box-shadow: 0 0 30px #ff4500; }
+        .btn-secondary { border-color: #555; color: #555; }
+        .btn-secondary:hover { background: #555; color: white; }
+
+        /* SKREPKA */
+        .skrepka-bot {
+            position: fixed; bottom: 20px; right: 20px; width: 300px;
+            background: #909090; border: 3px solid #ff0000;
+            color: black; font-family: 'Arial', sans-serif; font-size: 0.9rem; z-index: 200;
+            display: flex; flex-direction: column; box-shadow: 15px 15px 0 rgba(0,0,0,0.7);
+            animation: botSlideIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        @keyframes botSlideIn { from { transform: translateY(300px); } to { transform: translateY(0); } }
+        .bot-header { background: #ff0000; color: white; padding: 5px; font-weight: bold; display: flex; justify-content: space-between; text-transform: uppercase; }
+        .bot-body { padding: 15px; display: flex; align-items: center; gap: 15px; }
+        .bot-avatar { font-size: 3rem; }
+        .bot-text { background: #fff; border: 2px solid #000; padding: 10px; border-radius: 0px; font-weight: bold; }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+            .skrepka-bot { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="container">
+        <div class="left-col">
+            <div class="stamp-header">ОШИБКА ДНК (ХИМИК)</div>
+            
+            <div class="photo-frame">
+                <img src="../images/timur.jpg" alt="OBJ_TIMUR" class="mugshot">
+            </div>
+
+            <div class="sector-map">
+                <div class="map-grid"></div>
+                <div class="map-point point-turnik" title="МЕСТО ДЛЯ ПОДТЯГИВАНИЙ"></div>
+                <div class="map-point point-dealer" title="ДИЛЕР МЕЛА (ОБМАНЩИК)"></div>
+                <div class="map-point point-random" title="ЗДЕСЬ ОН ОБНЯЛ БЕРЕЗУ"></div>
+                <div class="map-label">ЛОКАЦИЯ: ОДИНЦОВО (ХИМЗАВОД)</div>
+            </div>
+
+            <div class="bio-box cypher-text" style="font-style: italic; border-color: #ff4500; color: #ff4500;">
+                "(Упорный свист сквозь слезы). <br>
+                ПЕРЕВОД: Я вколол себе литр масла в ягодицу, но бицепс не вырос. Зато я теперь очень люблю котят."
+                <br><br>— Тимур (после курса "метана")
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="dossier-header">
+                <h1 class="cypher-text">ТИМУР</h1>
+                <span class="id-num">ПРОЕКТ: НЕУДАЧНЫЙ ХАЛК</span>
+            </div>
+
+            <div class="data-block">
+                <div class="data-row"><span class="label">ВОЗРАСТ:</span><span class="value cypher-text">17 (ВНУТРИ - 84)</span></div>
+                <div class="data-row"><span class="label">КЛАСС:</span><span class="value cypher-text">ХИМИК-НЕУДАЧНИК</span></div>
+                <div class="data-row"><span class="label">УРОВЕНЬ ТЕСТОСТЕРОНА:</span><span class="value cypher-text" style="color:#00ff00">-50 (ОТРИЦАТЕЛЬНЫЙ)</span></div>
+                <div class="data-row"><span class="label">ТОПЛИВО:</span><span class="value" style="color:#ffff00">МЕЛ ПОД ВИДОМ ТРЕНА</span></div>
+            </div>
+
+            <div class="med-card">
+                <span class="med-title">/// АНАЛИЗ КРОВИ (УЖАС):</span>
+                <ul class="med-list cypher-text">
+                    <li>Фармакология: В крови обнаружено 40 видов стероидов. Эффект: Ноль.</li>
+                    <li>Мышцы: Организм отвергает рост. Причина: "Слишком добрый".</li>
+                    <li>Факт: Дельфины насилуют других рыб (Тимур плакал 3 часа, когда узнал).</li>
+                    <li>Факт: В 1859 году в Австралию завезли 24 кролика. Сейчас их миллиард. Тимур завидует их прогрессу.</li>
+                    <li>Психика: Стероидная ярость заменилась на "Стероидную нежность".</li>
+                </ul>
+            </div>
+
+            <div class="bio-box cypher-text">
+                > ДОСЬЕ:<br>
+                Уникальный случай в медицине. Тимур тратит все деньги на черном рынке фармы, скупая "Тренболон", "Сустанон" и "Метан". 
+                Ожидаемый эффект: Ярость, акне, гора мышц.<br>
+                Реальный эффект: Стал еще добрее, кожа как у младенца, мышцы как у велосипедиста. <br><br>
+                
+                > ПАРАДОКС:<br>
+                Вместо того чтобы ломать лица в подворотне, он под действием препаратов начинает переводить бабушек через дорогу (иногда против их воли).
+                Дилеры Одинцово продают ему мел и аскорбинку по цене героина, а он верит и ждет прихода "массы".
+                <br><br>
+                <span style="color: #ff4500; font-weight: bold;">!!! ОПАСНОСТЬ: МОЖЕТ НАСИЛЬНО ПРИЧИНИТЬ ДОБРО И ПОДУТЬ НА РАНКУ.</span>
+            </div>
+
+             <div class="search-history">
+                <span style="color:white; border-bottom: 1px solid white;">/// ИСТОРИЯ ПОЗОРА:</span><br>
+                <span class="search-item">> почему от тренболона хочется плакать под мультики</span>
+                <span class="search-item">> синтол в бицепс купить дешево авито</span>
+                <span class="search-item">> как вернуть деньги дилеру если мышцы не растут</span>
+                <span class="search-item">> дельфины маньяки википедия (шок контент)</span>
+                <span class="search-item">> можно ли накачаться от святой воды</span>
+            </div>
+
+            <div class="banner-ad">
+                💉 МАГАЗИН "КАЧОК-ДУРАЧОК" 💉<br>
+                <span>ПРОДАЕМ МЕЛ ЛОХАМ С 2010 ГОДА</span><br>
+                (ТИМУР РЕКОМЕНДУЕТ!)
+            </div>
+
+            <div class="controls">
+                <a href="../index.html" class="btn btn-secondary">&lt; НАЗАД</a>
+                <button class="btn" id="select-btn" style="font-weight:bold;">ДАТЬ ЕМУ ВИТАМИНКУ</button>
+            </div>
+            <div id="error-msg" style="color: red; margin-top: 15px; display: none; text-align: center; font-weight: bold; font-size: 1.2rem; text-shadow: 0 0 10px red;">
+                ⚠️ ОН ПОДУМАЛ, ЧТО ЭТО МЕТАН. ТЕПЕРЬ ОН ХОЧЕТ ВАС УСЫНОВИТЬ. БЕГИТЕ.
+            </div>
+        </div>
+    </div>
+
+    <div class="skrepka-bot">
+        <div class="bot-header"><span>НАРКОКОНТРОЛЬ</span><span>[X]</span></div>
+        <div class="bot-body">
+            <div class="bot-avatar">🚓</div>
+            <div class="bot-text">
+                Мы обыскали его квартиру.<br>
+                <b>Нашли тонну ампул. Внутри - подсолнечное масло.</b><br>
+                Парень идиот, но не преступник. Отпускаем.
+                <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:5px;">
+                    <button style="cursor:pointer; background:black; color:white; border:1px solid red; padding: 5px;">Ржать</button>
+                    <button style="cursor:pointer; background:white; color:black; border:1px solid black; padding: 5px;">Пожалеть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CHAOS TEXT
+        const chars = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ💊💉🧬🩸ERROR'; 
+        function scrambleText(element) {
+            const originalText = element.innerText;
+            let iteration = 0;
+            const interval = setInterval(() => {
+                element.innerText = originalText.split('').map((letter, i) => {
+                    if (i < iteration) return originalText[i];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                if (iteration >= originalText.length) clearInterval(interval);
+                iteration += 1.5; 
+            }, 15);
+        }
+        document.querySelectorAll('.cypher-text').forEach(el => scrambleText(el));
+
+        const btn = document.getElementById('select-btn');
+        const err = document.getElementById('error-msg');
+        btn.addEventListener('click', () => {
+            if(btn.getAttribute('data-doped') === "true") return;
+            btn.innerText = "ИНЪЕКЦИЯ..."; btn.style.opacity = "0.7";
+            setTimeout(() => {
+                btn.innerText = "ЭФФЕКТ: ДОБРОТА X100";
+                btn.style.borderColor = "#ff4500"; btn.style.color = "#ff4500"; btn.style.background = "black";
+                btn.setAttribute('data-doped', 'true');
+                err.style.display = 'block';
+            }, 1000); 
+        });
+    </script>
+</body>
+</html>

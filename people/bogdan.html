@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ДЕЛО №101: БОГДАН</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap');
+
+        /* --- БАЗА --- */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #050505; color: #d0d0d0;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+        }
+
+        /* --- FX LAYERS --- */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,255,255,0.05) 2px, rgba(0,255,255,0.05) 4px);
+            z-index: 90; pointer-events: none;
+        }
+        .vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.95) 100%);
+            z-index: 91; pointer-events: none;
+        }
+
+        /* --- GRID LAYOUT --- */
+        .container {
+            max-width: 1200px; margin: 0 auto; padding: 40px 20px;
+            display: grid; grid-template-columns: 350px 1fr; gap: 40px;
+            position: relative; z-index: 10;
+            margin-top: 2vh; padding-bottom: 100px;
+        }
+
+        /* --- LEFT COL --- */
+        .left-col { display: flex; flex-direction: column; gap: 20px; }
+
+        .stamp-header {
+            color: #0088ff; font-family: 'Rubik Glitch', cursive; font-size: 2.0rem;
+            text-align: center; text-shadow: 0 0 10px #0088ff;
+            border: 2px solid #0088ff; padding: 5px; transform: rotate(-1deg);
+            opacity: 0.8;
+        }
+
+        .photo-frame {
+            border: 2px solid #0088ff; position: relative; background: #000;
+        }
+        .mugshot {
+            width: 100%; height: auto; display: block;
+            filter: grayscale(100%) brightness(0.8) contrast(1.2); /* Тусклый, как его будущее */
+        }
+
+        /* MAP WIDGET */
+        .sector-map {
+            border: 1px solid #333; background: #000a12; height: 200px; position: relative;
+            overflow: hidden; opacity: 0.8;
+        }
+        .map-grid {
+            width: 100%; height: 100%;
+            background-image: linear-gradient(#002244 1px, transparent 1px), linear-gradient(90deg, #002244 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .map-point {
+            position: absolute; width: 8px; height: 8px; border-radius: 50%; cursor: help;
+        }
+        .point-dubna { background: #0088ff; top: 30%; left: 70%; box-shadow: 0 0 10px #0088ff; } /* Общага */
+        .point-krasnoe { background: #ff0000; top: 80%; left: 40%; box-shadow: 0 0 5px #ff0000; } /* КБ */
+        
+        .map-label {
+            position: absolute; bottom: 5px; left: 5px; font-size: 0.7rem; color: #0088ff; font-weight: bold;
+        }
+
+        /* --- RIGHT COL --- */
+        .dossier-header {
+            border-bottom: 1px solid #0088ff; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 10px;
+        }
+        h1 { font-family: 'Rubik Glitch', cursive; color: #0088ff; font-size: 3rem; margin: 0; }
+        .id-num { font-size: 1.2rem; color: #555; }
+
+        .data-row {
+            display: flex; justify-content: space-between; border-bottom: 1px dashed #003366; padding: 10px 0; font-size: 1.1rem;
+        }
+        .label { color: #557799; text-transform: uppercase; }
+        .value { color: #eee; font-weight: bold; }
+        
+        .med-card {
+            margin-top: 20px; border: 1px solid #0088ff; padding: 15px; background: rgba(0, 136, 255, 0.05);
+        }
+        .med-title { color: #0088ff; font-weight: bold; display: block; margin-bottom: 10px; text-transform: uppercase; }
+        .med-list { list-style: square; padding-left: 20px; color: #aaa; margin: 0; font-size: 0.9rem; }
+        .med-list li { margin-bottom: 5px; }
+
+        .bio-box {
+            margin-top: 20px; background: rgba(10, 20, 30, 0.8); border: 1px solid #003366; padding: 20px;
+            font-size: 0.95rem; line-height: 1.6; color: #aaa;
+        }
+
+        .search-history {
+            margin-top: 20px; background: #000; border: 1px dashed #444; padding: 10px;
+            font-family: 'Courier New', monospace; font-size: 0.8rem; color: #0088ff;
+        }
+        .search-item { display: block; margin-bottom: 2px; }
+
+        /* BANNER */
+        .banner-ad {
+            margin-top: 20px; background: #111; color: #fff; padding: 10px;
+            text-align: center; font-weight: bold; font-family: 'Arial', sans-serif;
+            border: 1px solid #555; cursor: pointer; text-transform: uppercase;
+        }
+        .banner-ad span { color: #0088ff; }
+
+        .controls { margin-top: 30px; display: flex; gap: 20px; }
+        .btn {
+            background: transparent; border: 1px solid #0088ff; color: #0088ff;
+            padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 1.2rem;
+            cursor: pointer; text-transform: uppercase; flex: 1; transition: 0.2s;
+        }
+        .btn:hover { background: #0088ff; color: #000; }
+        .btn-secondary { border-color: #555; color: #555; }
+        .btn-secondary:hover { background: #555; color: white; }
+
+        /* SKREPKA */
+        .skrepka-bot {
+            position: fixed; bottom: 20px; right: 20px; width: 280px;
+            background: #c0c0c0; border: 2px solid white; border-right-color: #444; border-bottom-color: #444;
+            color: black; font-family: 'Arial', sans-serif; font-size: 0.8rem; z-index: 200;
+            display: flex; flex-direction: column; box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
+            animation: botSlideIn 1s ease-out;
+        }
+        @keyframes botSlideIn { from { transform: translateY(200px); } to { transform: translateY(0); } }
+        .bot-header { background: #000080; color: white; padding: 2px 5px; font-weight: bold; display: flex; justify-content: space-between; }
+        .bot-body { padding: 10px; display: flex; align-items: flex-start; gap: 10px; }
+        .bot-avatar { font-size: 2.5rem; }
+        .bot-text { background: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px; }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+            .skrepka-bot { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="container">
+        <div class="left-col">
+            <div class="stamp-header">ПРОСТО БОГДАН</div>
+            
+            <div class="photo-frame">
+                <img src="../images/bogdan.jpg" alt="OBJ_BOGDAN" class="mugshot">
+            </div>
+
+            <div class="sector-map">
+                <div class="map-grid"></div>
+                <div class="map-point point-dubna" title="ДУБНА (СЫЧЕВАЛЬНЯ)"></div>
+                <div class="map-point point-krasnoe" title="АЛКОМАРКЕТ"></div>
+                <div class="map-label">ЛОКАЦИЯ: НАУКОГРАД (НО ОН НЕ УЧЕНЫЙ)</div>
+            </div>
+
+            <div class="bio-box cypher-text" style="font-style: italic; border-color: #0088ff; color: #0088ff;">
+                "Батя людей спасает, а я сохраняю видосы в ТикТоке. В принципе, тоже важная работа. Архив сам себя не пополнит."
+                <br><br>— Богдан (о смысле жизни)
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="dossier-header">
+                <h1 class="cypher-text">БОГДАН</h1>
+                <span class="id-num">ID: NPC_772</span>
+            </div>
+
+            <div class="data-block">
+                <div class="data-row"><span class="label">РОДОСЛОВНАЯ:</span><span class="value cypher-text">СЫН ГЕРОЯ (РАЗОЧАРОВАНИЕ)</span></div>
+                <div class="data-row"><span class="label">ФУНКЦИЯ:</span><span class="value cypher-text">ПЕРЕРАБОТКА O₂ В CO₂</span></div>
+                <div class="data-row"><span class="label">ПРОШЛОЕ:</span><span class="value cypher-text">БЫВШИЙ НЕФОР (ВЫЛЕЧИЛСЯ)</span></div>
+                <div class="data-row"><span class="label">НАВЫК:</span><span class="value" style="color:#0088ff">ЗНАТОК АЛГОРИТМОВ TIKTOK</span></div>
+            </div>
+
+            <div class="med-card">
+                <span class="med-title">/// ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ:</span>
+                <ul class="med-list cypher-text">
+                    <li>Амбиции: Отсутствуют (удалены при рождении)</li>
+                    <li>Печень: Закаленная водкой "Праздничная"</li>
+                    <li>Мыслительный процесс: Однопоточный (только мемы)</li>
+                    <li>КПД: 0% (абсолютный ноль)</li>
+                </ul>
+            </div>
+
+            <div class="bio-box cypher-text">
+                > ДОСЬЕ:<br>
+                Потомственный пожарный, который боится зажигалок. В семье его называют "тот, про которого мы не говорим гостям".
+                Раньше красил волосы и страдал, теперь просто страдает и пьет.<br><br>
+                > ДЕЯТЕЛЬНОСТЬ:<br>
+                Уехал в Дубну, чтобы создать видимость бурной деятельности. На деле — профессионально лежит на кровати и скроллит ленту.
+                Знает наизусть все тренды ТикТока, но применить это в жизни не может. Загадочен тем, что в его голове полная пустота, звенящая тишина и иногда реклама 1xBet.
+                <br><br>
+                <span style="color: #0088ff">!!! СТАТУС: ИСПРАВИВШИЙСЯ НЕФОР. ТЕПЕРЬ ПРОСТО СКУЧНЫЙ ТИП.</span>
+            </div>
+
+             <div class="search-history">
+                <span style="color:white; border-bottom: 1px solid white;">/// ПОСЛЕДНИЕ ЗАПРОСЫ:</span><br>
+                <span class="search-item">> как стать пожарным если боишься огня</span>
+                <span class="search-item">> дубна доставка водки круглосуточно</span>
+                <span class="search-item">> почему алгоритмы тикток меня ненавидят</span>
+                <span class="search-item">> куда сдать пустые бутылки выгодно</span>
+                <span class="search-item">> отец герой сын долбоеб психология</span>
+            </div>
+
+            <div class="banner-ad">
+                🚒 МЧС РОССИИ 🚒<br>
+                <span>ТВОЙ БАТЯ УЖЕ ЗАПИСАЛСЯ</span><br>
+                (А ТЫ ЧЕГО СИДИШЬ?)
+            </div>
+
+            <div class="controls">
+                <a href="../index.html" class="btn btn-secondary">&lt; НАЗАД</a>
+                <button class="btn" id="select-btn">ПОПЫТАТЬСЯ ПОНЯТЬ</button>
+            </div>
+            <div id="error-msg" style="color: red; margin-top: 15px; display: none; text-align: center;">
+                ⚠️ ОШИБКА: СМЫСЛ НЕ НАЙДЕН. ВНУТРИ ПУСТОТА.
+            </div>
+        </div>
+    </div>
+
+    <div class="skrepka-bot">
+        <div class="bot-header"><span>ПОМОЩНИК</span><span>X</span></div>
+        <div class="bot-body">
+            <div class="bot-avatar">📎</div>
+            <div class="bot-text">
+                Гражданин, вы слишком долго смотрите в пустоту.<br>
+                <b>Пустота начинает смотреть в вас.</b><br>
+                Предложить вакансию дворника?
+                <div style="margin-top:5px; display:flex; justify-content:flex-end; gap:5px;">
+                    <button style="cursor:pointer;">Давай</button>
+                    <button style="cursor:pointer;">Я занят (лежу)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TURBO SCRAMBLE
+        const chars = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789...'; 
+        function scrambleText(element) {
+            const originalText = element.innerText;
+            let iteration = 0;
+            const interval = setInterval(() => {
+                element.innerText = originalText.split('').map((letter, i) => {
+                    if (i < iteration) return originalText[i];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                if (iteration >= originalText.length) clearInterval(interval);
+                iteration += 2; 
+            }, 10);
+        }
+        document.querySelectorAll('.cypher-text').forEach(el => scrambleText(el));
+
+        const btn = document.getElementById('select-btn');
+        const err = document.getElementById('error-msg');
+        btn.addEventListener('click', () => {
+            if(btn.innerText === "404 NOT FOUND") return;
+            btn.innerText = "ЗАГРУЗКА ЛИЧНОСТИ..."; btn.style.opacity = "0.7";
+            setTimeout(() => {
+                btn.innerText = "404 NOT FOUND";
+                btn.style.borderColor = "#0088ff"; btn.style.color = "#0088ff";
+                err.style.display = 'block';
+            }, 800); 
+        });
+    </script>
+</body>
+</html>
